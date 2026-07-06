@@ -1,215 +1,537 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>⚡✨BarBar✨⚡ IPTV PLAYER</title>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <style>
-    body { margin:0; font-family:'Segoe UI',sans-serif; background:#0f0f1a; color:#eee; transition:0.3s; }
-    body.light { background:#f0f0f0; color:#111; }
-    header { padding:20px; text-align:center; font-size:26px; font-weight:bold; background:linear-gradient(90deg,#ffcc00,#ff9900); color:#000; box-shadow:0 4px 6px rgba(0,0,0,0.3); }
-    .auth, .m3u-input { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:10px; }
-    .auth input, .auth button, .m3u-input input, .m3u-input button { padding:12px; font-size:16px; border-radius:8px; border:none; }
-    .auth input, .m3u-input input { width:200px; }
-    .auth button, .m3u-input button { background:#ffcc00; color:#000; cursor:pointer; font-weight:bold; transition:0.2s; }
-    .auth button:hover, .m3u-input button:hover { background:#ff9900; }
-    .search-filter { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin:15px 0; }
-    .search-filter input, .search-filter select, .search-filter button { padding:10px; border-radius:6px; border:none; font-size:16px; }
-    .search-filter button { background:#ffcc00; color:#000; cursor:pointer; font-weight:bold; transition:0.2s; }
-    .search-filter button:hover { background:#ff9900; }
-    .controls { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:20px 0; }
-    .controls button { padding:10px 15px; border-radius:8px; border:none; background:#ffcc00; color:#000; font-weight:bold; cursor:pointer; transition:0.2s; }
-    .controls button:hover { background:#ff9900; }
-    .container { padding:20px; }
-    .channel-card { position:relative; background:#1a1a2e; width:200px; border-radius:12px; overflow:hidden; cursor:pointer; transition:0.3s; box-shadow:0 4px 8px rgba(0,0,0,0.5); }
-    .channel-card:hover { transform:translateY(-5px); box-shadow:0 8px 16px rgba(0,0,0,0.6); }
-    .channel-card img { width:100%; height:70px; object-fit:cover; }
-    .channel-card h3 { margin:10px; font-size:14px; text-align:center; }
-    .favorite-btn { position:absolute; top:8px; right:8px; background:#ffcc00; color:#000; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold; }
-    video { width:100%; max-width:720px; display:block; margin:20px auto; border-radius:12px; border:2px solid #ffcc00; }
-    footer { text-align:center; padding:10px; font-size:14px; color:#888; }
-    @media(max-width:768px){.channel-card{width:45%;}}
-    @media(max-width:480px){.channel-card{width:90%;}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV PORT PLAYER v4.2</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.8/hls.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0a0a12;
+            --panel-bg: #121224;
+            --card-bg: #1c1c3a;
+            --text-color: #eee;
+            --accent-color: #ffcc00;
+            --accent-hover: #ff9900;
+            --neon-shadow: rgba(255, 204, 0, 0.4);
+        }
+
+        body.light {
+            --bg-color: #f0f2f5; --panel-bg: #ffffff; --card-bg: #e4e6eb;
+            --text-color: #1c1e21; --accent-color: #0076ff; --accent-hover: #0056b3;
+            --neon-shadow: rgba(0, 118, 255, 0.2);
+        }
+        body.blue {
+            --bg-color: #001122; --panel-bg: #001f3f; --card-bg: #003366;
+            --text-color: #ffffff; --accent-color: #00ffff; --accent-hover: #00cccc;
+            --neon-shadow: rgba(0, 255, 255, 0.4);
+        }
+        body.green {
+            --bg-color: #051405; --panel-bg: #0f3f0f; --card-bg: #1f5f1f;
+            --text-color: #ffffff; --accent-color: #39ff14; --accent-hover: #28cc0f;
+            --neon-shadow: rgba(57, 255, 20, 0.4);
+        }
+        body.purple {
+            --bg-color: #100015; --panel-bg: #2f003f; --card-bg: #4f005f;
+            --text-color: #ffffff; --accent-color: #df00ff; --accent-hover: #b800cc;
+            --neon-shadow: rgba(223, 0, 255, 0.4);
+        }
+
+        body { 
+            margin:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-color); color: var(--text-color); 
+            transition: background 0.3s, color 0.3s; position:relative; overflow:hidden; height: 100vh;
+        }
+
+        #matrixContainer { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; z-index:0; }
+        .matrixText { position:absolute; font-weight:bold; white-space:nowrap; user-select:none; transform: rotate(-15deg); opacity: 0.15; font-family: monospace; }
+
+        /* SIKIŞTIRILMIŞ ANA SARMALAYICI */
+        .container-wrapper { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 5px 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+
+        /* SIKIŞTIRILMIŞ ÜST SATIRLAR */
+        .top-control-row { display: flex; justify-content: center; align-items: center; margin-bottom: 5px; }
+        .link-parser-box { display: flex; gap: 5px; width: 100%; max-width: 500px; }
+
+        .login-and-info-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
+
+        /* SIKIŞTIRILMIŞ BİLGİ PANELİ */
+        .iptv-info-vertical-bar {
+            display: flex; flex-direction: column; background: var(--panel-bg); padding: 4px 10px; border-radius: 6px;
+            border: 1px dashed var(--accent-color); font-size: 10px; gap: 1px; line-height: 1.2; min-width: 130px;
+        }
+        .iptv-info-vertical-bar div { display: flex; justify-content: space-between; gap: 8px; }
+        .iptv-info-vertical-bar span { font-weight: bold; color: var(--accent-color); }
+        .iptv-info-vertical-bar i { font-style: normal; color: #fff; }
+
+        .input-row { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; }
+        .input-row input, .input-row button, .input-row select, .link-parser-box input, .link-parser-box button { 
+            padding: 6px 10px; font-size:12px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);
+            background: var(--panel-bg); color: var(--text-color); outline: none; box-sizing: border-box;
+        }
+        .input-row input { width:150px; }
+        .link-parser-box input { width: 100%; }
+        
+        button { background: var(--accent-color); color: #000; cursor:pointer; font-weight:bold; transition:0.2s; border: none; }
+        button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+        /* MOD VE KATEGORİ ALANI SIKIŞTIRILDI */
+        .mode-row { display: flex; justify-content: center; gap: 10px; margin: 2px 0 5px 0; }
+        .mode-btn { 
+            padding: 6px 18px; font-size: 13px; font-weight: bold; border-radius: 20px; border: 2px solid var(--accent-color);
+            background: transparent; color: var(--text-color); cursor: pointer; transition: 0.3s;
+        }
+        .mode-btn.active, .mode-btn:hover {
+            background: var(--accent-color); color: #000; box-shadow: 0 0 10px var(--neon-shadow);
+        }
+
+        #categoryButtons { 
+            display:flex; gap:5px; margin: 2px 0 5px 0; overflow-x:auto; padding: 2px 0;
+            scrollbar-width: thin; scrollbar-color: var(--accent-color) transparent;
+        }
+        #categoryButtons button { 
+            padding: 5px 12px; border-radius:15px; border:none; font-size:11px; white-space: nowrap;
+            background: var(--card-bg); color: var(--text-color); cursor:pointer; font-weight:600; transition:0.2s; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        #categoryButtons button:hover, #categoryButtons button.active { 
+            background: var(--accent-color); color: #000; box-shadow: 0 0 5px var(--neon-shadow);
+        }
+
+        /* ÇALIŞMA ALANI MAKSİMUM GENİŞLİKTE */
+        .main-container { display:flex; gap:10px; flex: 1; min-height: 0; margin-bottom: 5px; }
+        
+        .left-panel { 
+            flex: 1; max-width: 360px; min-width: 280px; background: var(--panel-bg); 
+            border-radius:10px; padding:8px; overflow-y:auto; display: flex; flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.05); gap: 8px;
+        }
+
+        .search-box { width: 100%; position: relative; }
+        .search-box input { width: 100%; padding: 8px; border-radius: 6px; border: none; background: var(--card-bg); color: var(--text-color); box-sizing: border-box; font-size: 13px; }
+        
+        #channelGrid { flex: 1; overflow-y: auto; }
+
+        .right-panel { 
+            flex:2; background: #000; border-radius:10px; overflow: hidden;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            border: 2px solid var(--accent-color); box-shadow: 0 0 10px var(--neon-shadow); position: relative;
+        }
+
+        .channel-card { 
+            margin-bottom:5px; width:100%; cursor:pointer; display:flex; align-items:center; 
+            background: var(--card-bg); border-radius:6px; overflow:hidden; transition:0.1s; box-sizing: border-box; padding-right: 5px;
+        }
+        .channel-card img { width:35px; height:45px; object-fit:cover; margin-right:10px; background: #000; }
+        .channel-card h3 { font-size:12px; margin:0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .channel-card:hover { background: var(--accent-color); color: #000; transform: scale(1.005); }
+
+        .favorite-btn { 
+            background:transparent; color: var(--accent-color); border:none; 
+            font-size: 15px; cursor:pointer; transition:0.1s; padding: 4px;
+        }
+        .channel-card:hover .favorite-btn { color: #000; }
+
+        .right-panel video { width:100%; height:100%; object-fit: contain; }
+        .video-controls { position: absolute; bottom: 10px; display: flex; gap: 8px; background: rgba(0,0,0,0.7); padding: 5px 12px; border-radius: 20px; backdrop-filter: blur(5px); }
+        .video-controls button { background: var(--accent-color); color: #000; border: none; padding: 4px 10px; font-weight: bold; border-radius: 12px; cursor: pointer; font-size: 11px; }
+
+        footer { text-align:center; font-size:11px; color:#555; padding: 2px 0; }
+
+        @media(max-width:768px){
+            body { overflow: auto; height: auto; }
+            .container-wrapper { height: auto; }
+            .main-container { flex-direction: column-reverse; height: auto; }
+            .left-panel { max-width: 100%; height: auto; }
+            .right-panel { height: 220px; }
+            .input-row input { width: 100%; }
+            .login-and-info-row { flex-direction: column-reverse; align-items: stretch; }
+        }
+    </style>
 </head>
-<body onload="loadCredentials(); loadFavorites();">
+<body onload="App.init()">
 
-<header>⚡✨BarBar✨⚡ IPTV PLAYER</header>
+<div class="container-wrapper">
+    <div class="top-control-row">
+        <div class="link-parser-box">
+            <input type="text" id="m3uLink" placeholder="M3U Linkini Yapıştırın (Xtream Formatlı)">
+            <button onclick="App.parseXtreamM3ULink()">🔗 Çözümle</button>
+        </div>
+    </div>
+    
+    <div class="login-and-info-row">
+        <div class="iptv-info-vertical-bar" id="infoBox">
+            <div><span>Başlangıç:</span> <i id="info-start">-</i></div>
+            <div><span>Bitiş:</span> <i id="info-end">-</i></div>
+            <div><span>Aktif/Max:</span> <i><b id="info-active">-</i> / <i id="info-max">-</i></b></div>
+            <div><span>K/F/D:</span> <i><b id="info-live-count">-</i> / <i id="info-movie-count">-</i> / <i id="info-series-count">-</i></b></div>
+        </div>
 
-<div class="m3u-input">
-  <input type="text" id="m3uLink" placeholder="M3U Bağlantısı (Xtream format)">
-  <button onclick="parseXtreamM3ULink()">🔗 Ayır ve Doldur</button>
+        <div class="input-row">
+            <input type="text" id="server" placeholder="Sunucu Adresi">
+            <input type="text" id="username" placeholder="Kullanıcı Adı">
+            <input type="password" id="password" placeholder="Şifre">
+            <button onclick="App.initialize()">🚀 Giriş</button>
+            
+            <select onchange="App.changeTheme(this.value)">
+                <option value="dark">🌑 Dark</option>
+                <option value="light">🌗 Light</option>
+                <option value="blue">🔵 Mavi</option>
+                <option value="green">🟢 Yeşil</option>
+                <option value="purple">🟣 Mor</option>
+            </select>
+            <button onclick="App.showFavorites()" style="background: #ff4545; color: white;">⭐</button>
+        </div>
+    </div>
+
+    <div class="mode-row">
+        <button id="mode-live" class="mode-btn active" onclick="App.switchMode('live')">📺 Canlı TV</button>
+        <button id="mode-movies" class="mode-btn" onclick="App.switchMode('movies')">🎬 Filmler</button>
+        <button id="mode-series" class="mode-btn" onclick="App.switchMode('series')">🍿 Diziler</button>
+    </div>
+
+    <div id="categoryButtons"></div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="search-box">
+                <input type="text" id="searchInput" oninput="App.filterChannels()" placeholder="🔍 Ara...">
+            </div>
+            
+            <div id="channelGrid">
+                <p style="text-align:center; color:#666; font-size:12px; margin-top:20px;">Giriş yapın.</p>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <video id="video" controls autoplay></video>
+            <div class="video-controls">
+                <button onclick="App.rewind()">⏪ 10sn</button>
+                <button onclick="App.forward()">⏩ 10sn</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>Cyber IPTV Player Panel v4.2</footer>
 </div>
 
-<div class="auth">
-  <input type="text" id="server" placeholder="Sunucu">
-  <input type="text" id="username" placeholder="Kullanıcı Adı">
-  <input type="password" id="password" placeholder="Şifre">
-  <button onclick="initialize()">Giriş Yap</button>
-  <button onclick="toggleTheme()">🌗 Tema</button>
-</div>
-
-<div class="search-filter">
-  <input type="text" id="searchInput" placeholder="Kanal Ara">
-  <button onclick="filterChannels()">🔍 Ara</button>
-  <select id="categorySelect" onchange="filterChannels()">
-    <option value="">Tüm Kategoriler</option>
-  </select>
-</div>
-
-<video id="video" controls></video>
-<div class="controls">
-  <button onclick="rewind()">⏪ 10sn Geri</button>
-  <button onclick="forward()">⏩ 10sn İleri</button>
-</div>
-
-<div class="container" id="channelGrid"></div>
-
-<footer>⚡✨BarBar✨⚡ Modern IPTV Panel</footer>
+<div id="matrixContainer"></div>
 
 <script>
-let server='', username='', password='', channels=[], filteredChannels=[], currentIndex=-1;
-let favorites = [];
+const App = {
+    state: {
+        server: '',
+        username: '',
+        password: '',
+        currentMode: 'live',
+        data: { live: [], movies: [], series: [] },
+        filteredList: [],
+        favorites: [],
+        activeSubCategory: null,
+        hlsInstance: null,
+        defaultLogo: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=100&auto=format&fit=crop'
+    },
 
-function saveCredentials() {
-  localStorage.setItem('iptv_server', server);
-  localStorage.setItem('iptv_user', username);
-  localStorage.setItem('iptv_pass', password);
-}
-function loadCredentials() {
-  server = localStorage.getItem('iptv_server')||'';
-  username = localStorage.getItem('iptv_user')||'';
-  password = localStorage.getItem('iptv_pass')||'';
-  document.getElementById('server').value=server;
-  document.getElementById('username').value=username;
-  document.getElementById('password').value=password;
-  if(server && username && password) initialize();
-}
-function loadFavorites(){
-  favorites = JSON.parse(localStorage.getItem('favorites'))||[];
-}
-function parseXtreamM3ULink(){
-  const link = document.getElementById('m3uLink').value.trim();
-  try {
-    const url = new URL(link);
-    const server = `${url.protocol}//${url.host}`;
-    const params = new URLSearchParams(url.search);
-    const username = params.get('username');
-    const password = params.get('password');
-    if (!username || !password) throw "Kullanıcı adı veya şifre bulunamadı.";
-    document.getElementById('server').value = server;
-    document.getElementById('username').value = username;
-    document.getElementById('password').value = password;
-    alert("Bilgiler ayrıldı ve kutulara yerleştirildi ✅");
-  } catch (err) {
-    alert("Bağlantı çözümlenemedi: " + err);
-  }
-}
-function initialize(){
-  server = document.getElementById('server').value.trim();
-  username = document.getElementById('username').value.trim();
-  password = document.getElementById('password').value.trim();
-  if(!server||!username||!password) return alert("Tüm alanları doldurun.");
-  saveCredentials();
-  loadChannels();
-}
-async function loadChannels(){
-  try{
-    let url=`${server}/player_api.php?username=${username}&password=${password}&action=get_live_streams`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(!Array.isArray(data)) throw "Kanallar alınamadı veya JSON formatı bilinmiyor!";
-    channels = data;
-    filteredChannels = channels;
-    populateCategories();
-    renderChannels();
-  }catch(err){
-    alert("Kanallar alınamadı! Hata: "+err);
-    console.error(err);
-  }
-}
-function populateCategories(){
-  const catSelect=document.getElementById('categorySelect');
-  catSelect.innerHTML='<option value="">Tüm Kategoriler</option>';
-  const cats=[...new Set(channels.map(c=>c.category_name))];
-  cats.forEach(cat=>{
-    const opt=document.createElement('option');
-    opt.value=cat; opt.textContent=cat;
-    catSelect.appendChild(opt);
-  });
-}
-function renderChannels(){
-  const grid=document.getElementById('channelGrid');
-  grid.innerHTML='';
-  const categories = [...new Set(filteredChannels.map(c => c.category_name))];
-  categories.forEach(cat => {
-    const catTitle = document.createElement('h2');
-    catTitle.textContent = cat;
-    catTitle.style = "width:100%; text-align:left; color:#ffcc00; margin-top:30px; font-size:20px;";
-    grid.appendChild(catTitle);
-    const catGroup = document.createElement('div');
-    catGroup.style = "display:flex; flex-wrap:wrap; gap:15px;";
-    filteredChannels.filter(c => c.category_name === cat).forEach((ch, index) => {
-      const div = document.createElement('div');
-      div.className = 'channel-card';
-      div.innerHTML = `<img src="${ch.stream_icon||''}" /><h3>${ch.name||ch.stream_name||"Unnamed"}</h3>`;
+    el: {
+        server: () => document.getElementById('server'),
+        user: () => document.getElementById('username'),
+        pass: () => document.getElementById('password'),
+        m3u: () => document.getElementById('m3uLink'),
+        search: () => document.getElementById('searchInput'),
+        grid: () => document.getElementById('channelGrid'),
+        categories: () => document.getElementById('categoryButtons'),
+        video: () => document.getElementById('video'),
+        matrix: () => document.getElementById('matrixContainer')
+    },
 
-      const favBtn = document.createElement('button');
-      favBtn.className = 'favorite-btn';
-      favBtn.innerHTML = '⭐';
-      favBtn.onclick = (e) => {
-        e.stopPropagation();
-        addToFavorites(ch);
-      };
-      div.appendChild(favBtn);
+    init() {
+        this.loadCredentials();
+        this.loadFavorites();
+        this.createMatrixText();
+        window.addEventListener('resize', () => this.createMatrixText());
+    },
 
-      div.onclick = () => {
-        currentIndex = index;
-        playChannel(ch);
-        document.getElementById('video').scrollIntoView({behavior:'smooth'});
-      };
+    loadCredentials() {
+        this.state.server = localStorage.getItem('iptv_server') || '';
+        this.state.username = localStorage.getItem('iptv_user') || '';
+        this.state.password = localStorage.getItem('iptv_pass') || '';
 
-      catGroup.appendChild(div);
-    });
+        this.el.server().value = this.state.server;
+        this.el.user().value = this.state.username;
+        this.el.pass().value = this.state.password;
 
-    grid.appendChild(catGroup);
-  });
-}
+        if (this.state.server && this.state.username && this.state.password) {
+            this.initialize();
+        }
+    },
 
-function filterChannels(){
-  const search=document.getElementById('searchInput').value.toLowerCase();
-  const cat=document.getElementById('categorySelect').value;
-  filteredChannels=channels.filter(ch=>{
-    return (!cat || ch.category_name===cat) &&
-           (ch.name.toLowerCase().includes(search) || (ch.stream_name && ch.stream_name.toLowerCase().includes(search)));
-  });
-  renderChannels();
-}
+    saveCredentials() {
+        localStorage.setItem('iptv_server', this.state.server);
+        localStorage.setItem('iptv_user', this.state.username);
+        localStorage.setItem('iptv_pass', this.state.password);
+    },
 
-function addToFavorites(ch){
-  if(!favorites.some(f=>f.stream_id===ch.stream_id)) favorites.push(ch);
-  localStorage.setItem('favorites', JSON.stringify(favorites));
-  alert(ch.name + " favorilere eklendi!");
-}
+    loadFavorites() { this.state.favorites = JSON.parse(localStorage.getItem('favorites')) || []; },
 
-function playChannel(ch){
-  const video=document.getElementById('video');
-  const url=ch.stream_url||(ch.stream_id?`${server}/live/${username}/${password}/${ch.stream_id}.m3u8`:"");
-  if(!url){ alert("Oynatılacak URL bulunamadı!"); return; }
+    toggleFavorite(item) {
+        const favKey = `${this.state.currentMode}_${item.stream_id || item.series_id}`;
+        const index = this.state.favorites.findIndex(f => f.favKey === favKey);
+        
+        if (index === -1) {
+            this.state.favorites.push({ ...item, favKey: favKey, itemMode: this.state.currentMode });
+        } else {
+            this.state.favorites.splice(index, 1);
+        }
+        localStorage.setItem('favorites', JSON.stringify(this.state.favorites));
+        this.renderList();
+    },
 
-  if(Hls.isSupported()){
-    const hls=new Hls();
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play());
-  } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-    video.src=url; video.play();
-  } else alert("Tarayıcı HLS desteklemiyor!");
-}
+    showFavorites() {
+        if (this.state.favorites.length === 0) return alert("Henüz favori eklemediniz!");
+        this.state.filteredList = [...this.state.favorites];
+        this.state.activeSubCategory = 'fav';
+        this.updateActiveSubCategoryButton();
+        this.renderList();
+    },
 
-function rewind(){ document.getElementById('video').currentTime-=10; }
-function forward(){ document.getElementById('video').currentTime+=10; }
-function toggleTheme(){ document.body.classList.toggle('light'); }
+    parseXtreamM3ULink() {
+        const link = this.el.m3u().value.trim();
+        try {
+            const url = new URL(link);
+            const serverUrl = `${url.protocol}//${url.host}`;
+            const params = new URLSearchParams(url.search);
+            const userParam = params.get('username');
+            const passParam = params.get('password');
+
+            if (!userParam || !passParam) throw new Error("M3U eksik.");
+
+            this.el.server().value = serverUrl;
+            this.el.user().value = userParam;
+            this.el.pass().value = passParam;
+            alert("Ayrıştırıldı! 🚀");
+        } catch (err) {
+            alert("Geçersiz link: " + err.message);
+        }
+    },
+
+    initialize() {
+        this.state.server = this.el.server().value.trim();
+        this.state.username = this.el.user().value.trim();
+        this.state.password = this.el.pass().value.trim();
+
+        if (!this.state.server || !this.state.username || !this.state.password) return;
+
+        this.saveCredentials();
+        this.loadAllData();
+    },
+
+    formatTimestamp(ts) {
+        if (!ts || ts === "null" || ts === "0") return "Yok";
+        const date = new Date(ts * 1000);
+        return date.toLocaleDateString('tr-TR');
+    },
+
+    async loadAllData() {
+        const grid = this.el.grid();
+        grid.innerHTML = '<p style="text-align:center; color:#aaa; margin-top:20px; font-size:12px;">Yükleniyor...</p>';
+
+        const baseUrl = `${this.state.server}/player_api.php?username=${this.state.username}&password=${this.state.password}`;
+
+        try {
+            const [profileRes, liveRes, movieRes, seriesRes] = await Promise.all([
+                fetch(baseUrl).then(r => r.json()).catch(() => null),
+                fetch(baseUrl + '&action=get_live_streams').then(r => r.json()).catch(() => []),
+                fetch(baseUrl + '&action=get_vod_streams').then(r => r.json()).catch(() => []),
+                fetch(baseUrl + '&action=get_series').then(r => r.json()).catch(() => [])
+            ]);
+
+            this.state.data.live = Array.isArray(liveRes) ? liveRes : [];
+            this.state.data.movies = Array.isArray(movieRes) ? movieRes : [];
+            this.state.data.series = Array.isArray(seriesRes) ? seriesRes : [];
+
+            if (profileRes && profileRes.user_info) {
+                const u = profileRes.user_info;
+                document.getElementById('info-start').textContent = this.formatTimestamp(u.created_at);
+                document.getElementById('info-end').textContent = this.formatTimestamp(u.exp_date);
+                document.getElementById('info-active').textContent = u.active_cons || "0";
+                document.getElementById('info-max').textContent = u.max_connections || "1";
+            }
+
+            document.getElementById('info-live-count').textContent = this.state.data.live.length;
+            document.getElementById('info-movie-count').textContent = this.state.data.movies.length;
+            document.getElementById('info-series-count').textContent = this.state.data.series.length;
+
+            this.switchMode(this.state.currentMode);
+        } catch (err) {
+            grid.innerHTML = '<p style="text-align:center; color:#ff4545; margin-top:20px; font-size:12px;">Hata oluştu.</p>';
+        }
+    },
+
+    switchMode(mode) {
+        this.state.currentMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`mode-${mode}`).classList.add('active');
+
+        this.populateSubCategories();
+    },
+
+    populateSubCategories() {
+        const container = this.el.categories();
+        container.innerHTML = '';
+
+        const activeData = this.state.data[this.state.currentMode];
+        const subCategories = [...new Set(activeData.map(item => item.category_name).filter(cat => cat && cat.toLowerCase() !== 'diğer'))];
+
+        if(subCategories.length === 0) {
+            this.state.filteredList = activeData;
+            this.state.activeSubCategory = null;
+            this.renderList();
+            return;
+        }
+
+        subCategories.forEach((subCat, index) => {
+            const btn = document.createElement('button');
+            btn.id = `btn-subcat-${index}`;
+            btn.textContent = subCat;
+            btn.onclick = () => {
+                this.state.filteredList = activeData.filter(item => item.category_name === subCat);
+                this.state.activeSubCategory = index;
+                this.updateActiveSubCategoryButton();
+                this.renderList();
+            };
+            container.appendChild(btn);
+        });
+
+        this.state.filteredList = activeData.filter(item => item.category_name === subCategories[0]);
+        this.state.activeSubCategory = 0;
+        this.updateActiveSubCategoryButton();
+        this.renderList();
+    },
+
+    updateActiveSubCategoryButton() {
+        document.querySelectorAll('#categoryButtons button').forEach(b => b.classList.remove('active'));
+        if (this.state.activeSubCategory !== null && this.state.activeSubCategory !== 'fav') {
+            document.getElementById(`btn-subcat-${this.state.activeSubCategory}`)?.classList.add('active');
+        }
+    },
+
+    renderList() {
+        const grid = this.el.grid();
+        grid.innerHTML = '';
+
+        if (this.state.filteredList.length === 0) {
+            grid.innerHTML = '<p style="text-align:center; color:#666; margin-top:20px; font-size:12px;">İçerik yok.</p>';
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        this.state.filteredList.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'channel-card';
+
+            const name = item.name || item.stream_name || item.series_name || "İsimsiz";
+            const logoUrl = item.stream_icon || item.cover || item.series_cover || this.state.defaultLogo;
+            const id = item.stream_id || item.series_id;
+            const modeOfItem = item.itemMode || this.state.currentMode;
+
+            card.innerHTML = `
+                <img src="${logoUrl}" onerror="this.src='${this.state.defaultLogo}'" alt="logo" />
+                <h3>${name}</h3>
+            `;
+
+            const favBtn = document.createElement('button');
+            favBtn.className = 'favorite-btn';
+            
+            const currentFavKey = `${modeOfItem}_${id}`;
+            const isFav = this.state.favorites.some(f => f.favKey === currentFavKey);
+            favBtn.innerHTML = isFav ? '❤️' : '🤍';
+            
+            favBtn.onclick = (e) => {
+                e.stopPropagation();
+                this.toggleFavorite(item);
+            };
+
+            card.appendChild(favBtn);
+            card.onclick = () => this.playItem(item, modeOfItem);
+            fragment.appendChild(card);
+        });
+
+        grid.appendChild(fragment);
+    },
+
+    filterChannels() {
+        const query = this.el.search().value.toLowerCase();
+        const activeData = this.state.activeSubCategory === 'fav' ? this.state.favorites : this.state.data[this.state.currentMode];
+        
+        this.state.filteredList = activeData.filter(item => {
+            const name = (item.name || item.stream_name || item.series_name || '').toLowerCase();
+            return name.includes(query);
+        });
+        this.renderList();
+    },
+
+    playItem(item, mode) {
+        const video = this.el.video();
+        let streamUrl = '';
+        const id = item.stream_id || item.series_id;
+
+        if (mode === 'live') {
+            streamUrl = `${this.state.server}/live/${this.state.username}/${this.state.password}/${id}.m3u8`;
+        } else if (mode === 'movies') {
+            streamUrl = `${this.state.server}/movie/${this.state.username}/${this.state.password}/${id}.mp4`;
+        } else if (mode === 'series') {
+            streamUrl = `${this.state.server}/series/${this.state.username}/${this.state.password}/${id}.mp4`;
+        }
+
+        if (this.state.hlsInstance) {
+            this.state.hlsInstance.destroy();
+            this.state.hlsInstance = null;
+        }
+
+        if (streamUrl.endsWith('.m3u8') && Hls.isSupported()) {
+            this.state.hlsInstance = new Hls();
+            this.state.hlsInstance.loadSource(streamUrl);
+            this.state.hlsInstance.attachMedia(video);
+            this.state.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+        } else {
+            video.src = streamUrl;
+            video.play().catch(() => {});
+        }
+    },
+
+    rewind() { this.el.video().currentTime -= 10; },
+    forward() { this.el.video().currentTime += 10; },
+    changeTheme(themeName) { document.body.className = themeName; },
+
+    createMatrixText() {
+        const container = this.el.matrix();
+        container.innerHTML = '';
+        const opacityColors = ["rgba(255,204,0,0.01)", "rgba(255,204,0,0.03)"];
+        const fragment = document.createDocumentFragment();
+
+        for (let i = 0; i < 10; i++) {
+            const span = document.createElement('span');
+            span.className = 'matrixText';
+            span.textContent = 'IPTV';
+            span.style.top = Math.random() * window.innerHeight + 'px';
+            span.style.left = Math.random() * window.innerWidth + 'px';
+            span.style.fontSize = (14 + Math.random() * 15) + 'px';
+            span.style.color = opacityColors[Math.floor(Math.random() * opacityColors.length)];
+            fragment.appendChild(span);
+
+            let currentTop = parseFloat(span.style.top);
+            setInterval(() => {
+                currentTop += 0.2;
+                if (currentTop > window.innerHeight) currentTop = -30;
+                span.style.top = currentTop + 'px';
+            }, 60);
+        }
+        container.appendChild(fragment);
+    }
+};
 </script>
 </body>
 </html>
