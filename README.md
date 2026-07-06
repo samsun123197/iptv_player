@@ -4,6 +4,7 @@ https://samsun123197.github.io/iptv_player/
 
 online iptv player
 
-<img width="1912" height="840" alt="image" src="https://github.com/user-attachments/assets/c208c3da-2b7b-4cb5-8f62-2a606e7f46ad" />
+<img width="1911" height="842" alt="image" src="https://github.com/user-attachments/assets/5c204fe3-fd80-428e-9e1b-918a7f630a31" />
+
 
 
