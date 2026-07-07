@@ -369,11 +369,11 @@ const App = {
         return new Date(ts * 1000).toLocaleDateString('tr-TR');
     },
 
-    // GitHub Pages / HTTPS / Mixed Content Koruma URL Üretici Fonksiyonu (YENİ SÜRÜM)
+    // GitHub Pages / HTTPS / Mixed Content Koruma URL Üretici Fonksiyonu
     getSecureProxyUrl(targetUrl) {
         if (window.location.hostname.includes('github.io') || window.location.protocol === 'https:') {
-            // AllOrigins 522 verdiği için daha stabil olan alternatif proxy servisini kullanıyoruz:
-            return `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+            // Kendi oluşturduğun Cloudflare Worker linkini buraya yazıyorsun
+            return `https://iptv-proxy.kocrdp.workers.dev/?url=${encodeURIComponent(targetUrl)}`;
         }
         return targetUrl; 
     },
