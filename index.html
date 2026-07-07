@@ -372,9 +372,10 @@ const App = {
     // GitHub Pages / HTTPS / Mixed Content Koruma URL Üretici Fonksiyonu
     getSecureProxyUrl(targetUrl) {
         if (window.location.hostname.includes('github.io') || window.location.protocol === 'https:') {
-            return `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+            // Kendi oluşturduğun Cloudflare Worker linkini buraya yazıyorsun
+            return `https://iptv-proxy.kocrdp.workers.dev/?url=${encodeURIComponent(targetUrl)}`;
         }
-        return targetUrl; // Localhost veya file:// durumunda doğrudan orjinal URL'i kullanır
+        return targetUrl; 
     },
 
     async loadAllData() {
