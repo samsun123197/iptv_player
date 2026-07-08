@@ -40,8 +40,8 @@
             transition: background 0.3s, color 0.3s; position:relative; overflow:hidden; height: 100vh;
         }
 
-        #matrixContainer { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; z-index:0; }
-        .matrixText { position:absolute; font-weight:bold; white-space:nowrap; user-select:none; transform: rotate(-15deg); opacity: 0.1; font-family: monospace; }
+        #matrixContainer { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; z-index:0; opacity: 0.1; }
+        .matrixText { position:absolute; font-weight:bold; white-space:nowrap; user-select:none; transform: rotate(-15deg); font-family: monospace; }
 
         .container-wrapper { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 5px 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
 
@@ -538,6 +538,7 @@ const App = {
                         const epCard = document.createElement('div');
                         epCard.className = 'channel-card';
                         epCard.innerHTML = `<h3>📺 Bölüm ${ep.episode_num}: ${ep.title}</h3>`;
+                        
                         epCard.onclick = () => this.playDirectUrl(`${this.state.server}/series/${this.state.username}/${this.state.password}/${ep.id}.${ep.container_extension || 'mp4'}`);
                         grid.appendChild(epCard);
                     });
@@ -562,7 +563,7 @@ const App = {
     },
 
     playDirectUrl(url) {
-        // HTTP olan video/canlı akış adreslerini de proxy kapsamına alıyoruz
+        console.log("Oynatılan Orijinal URL:", url);
         url = this.getSecureProxyUrl(url);
         const video = this.el.video();
         
@@ -573,19 +574,32 @@ const App = {
             this.state.hlsInstance = null; 
         }
 
-        // Proxy eklenmiş url kontrolü için encode halini veya orjinal m3u8 uzantısını arar
         if ((url.includes('.m3u8') || url.includes('%2Em3u8')) && Hls.isSupported()) {
             this.state.hlsInstance = new Hls({
-                maxMaxBufferLength: 10
+                maxMaxBufferLength: 10,
+                enableWorker: true,
+                lowLatencyMode: true
             });
             this.state.hlsInstance.loadSource(url);
             this.state.hlsInstance.attachMedia(video);
             this.state.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
             
             this.state.hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                    video.src = url;
-                    video.play().catch(() => {});
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.log("HLS Ağ Hatası, yeniden yükleniyor...");
+                            this.state.hlsInstance.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log("HLS Medya Hatası, kurtarılmaya çalışılıyor...");
+                            this.state.hlsInstance.recoverMediaError();
+                            break;
+                        default:
+                            video.src = url;
+                            video.play().catch(() => {});
+                            break;
+                    }
                 }
             });
         } else {
@@ -605,9 +619,7 @@ const App = {
                     if (res.epg_listings[0].title_decoded) {
                         decodedTitle = atob(res.epg_listings[0].title_decoded);
                     }
-                } catch(b64err) {
-                    decodedTitle = nowPlaying;
-                }
+                } catch(b64err) { decodedTitle = nowPlaying; }
                 this.el.epgText().textContent = decodedTitle;
                 this.el.epg().style.display = "block";
             } else { this.el.epg().style.display = "none"; }
