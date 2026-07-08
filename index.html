@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPTV PORT PLAYER v5.0 Ultimate</title>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.8/hls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
     
     <style>
         :root {
@@ -214,7 +214,7 @@
 
         <div class="right-panel">
             <div class="epg-info-bar" id="epgBar">📺 Şu An Oynatılıyor: <span id="epgText">-</span></div>
-            <video id="video" controls autoplay></video>
+            <video id="video" crossorigin="anonymous" controls autoplay></video>
             <div class="video-controls">
                 <button onclick="App.rewind()">⏪ 10sn</button>
                 <button onclick="App.forward()">⏩ 10sn</button>
@@ -268,10 +268,7 @@ const App = {
     },
 
     loadProfiles() {
-        try {
-            this.state.profiles = JSON.parse(localStorage.getItem('iptv_profiles')) || [];
-        } catch(e) { this.state.profiles = []; }
-        
+        try { this.state.profiles = JSON.parse(localStorage.getItem('iptv_profiles')) || []; } catch(e) { this.state.profiles = []; }
         const select = this.el.profiles();
         select.innerHTML = '<option value="">👤 Kayıtlı Profiller</option>';
         this.state.profiles.forEach((p, index) => {
@@ -280,10 +277,7 @@ const App = {
             opt.textContent = p.name || p.server;
             select.appendChild(opt);
         });
-
-        if(this.state.profiles.length > 0) {
-            setTimeout(() => this.loadProfile(0), 100);
-        }
+        if(this.state.profiles.length > 0) { setTimeout(() => this.loadProfile(0), 100); }
     },
 
     loadProfile(index) {
@@ -306,29 +300,17 @@ const App = {
         }
     },
 
-    loadFavorites() { 
-        try { this.state.favorites = JSON.parse(localStorage.getItem('favorites')) || []; } 
-        catch(e) { this.state.favorites = []; }
-    },
+    loadFavorites() { try { this.state.favorites = JSON.parse(localStorage.getItem('favorites')) || []; } catch(e) { this.state.favorites = []; } },
 
     toggleFavorite(item) {
         const id = item.stream_id || item.series_id;
         const modeOfItem = item.itemMode || this.state.currentMode;
         const favKey = `${modeOfItem}_${id}`;
-        
         const index = this.state.favorites.findIndex(f => f.favKey === favKey);
-        if (index === -1) {
-            this.state.favorites.push({ ...item, favKey: favKey, itemMode: modeOfItem });
-        } else {
-            this.state.favorites.splice(index, 1);
-        }
+        if (index === -1) { this.state.favorites.push({ ...item, favKey: favKey, itemMode: modeOfItem }); } 
+        else { this.state.favorites.splice(index, 1); }
         localStorage.setItem('favorites', JSON.stringify(this.state.favorites));
-        
-        if(this.state.activeSubCategory === 'fav') {
-            this.showFavorites();
-        } else {
-            this.renderList();
-        }
+        if(this.state.activeSubCategory === 'fav') { this.showFavorites(); } else { this.renderList(); }
     },
 
     showFavorites() {
@@ -369,10 +351,9 @@ const App = {
         return new Date(ts * 1000).toLocaleDateString('tr-TR');
     },
 
-    // GitHub Pages / HTTPS / Mixed Content Koruma URL Üretici Fonksiyonu
     getSecureProxyUrl(targetUrl) {
         if (window.location.hostname.includes('github.io') || window.location.protocol === 'https:') {
-            // Kendi oluşturduğun Cloudflare Worker linkini buraya yazıyorsun
+            // BURAYA KENDİ GERÇEK CLOUDFLARE WORKER LINKINI YAZMALISIN
             return `https://iptv-proxy.kocrdp.workers.dev/?url=${encodeURIComponent(targetUrl)}`;
         }
         return targetUrl; 
@@ -408,9 +389,7 @@ const App = {
             document.getElementById('info-series-count').textContent = this.state.data.series.length;
 
             this.switchMode(this.state.currentMode);
-        } catch (err) {
-            grid.innerHTML = '<p style="text-align:center; color:#ff4545; margin-top:20px; font-size:12px;">Hata oluştu.</p>';
-        }
+        } catch (err) { grid.innerHTML = '<p style="text-align:center; color:#ff4545; margin-top:20px; font-size:12px;">Hata oluştu.</p>'; }
     },
 
     switchMode(mode) {
@@ -486,10 +465,7 @@ const App = {
             favBtn.onclick = (e) => { e.stopPropagation(); this.toggleFavorite(item); };
 
             card.appendChild(favBtn);
-            card.onclick = () => {
-                if(modeOfItem === 'series') { this.loadSeriesInfo(item); } 
-                else { this.playItem(item, modeOfItem); }
-            };
+            card.onclick = () => { if(modeOfItem === 'series') { this.loadSeriesInfo(item); } else { this.playItem(item, modeOfItem); } };
             fragment.appendChild(card);
         });
         grid.appendChild(fragment);
@@ -498,12 +474,10 @@ const App = {
     filterChannels() {
         const query = this.el.search().value.toLowerCase();
         const activeData = this.state.activeSubCategory === 'fav' ? this.state.favorites : this.state.data[this.state.currentMode];
-        
         let list = activeData.filter(item => {
             const name = (item.name || item.stream_name || item.series_name || '').toLowerCase();
             return name.includes(query);
         });
-
         if(document.getElementById('sortSelect').value === 'az') {
             list.sort((a,b) => {
                 const nameA = (a.name || a.stream_name || a.series_name || '');
@@ -523,7 +497,6 @@ const App = {
         try {
             const res = await fetch(this.getSecureProxyUrl(url)).then(r => r.json());
             if(!res || !res.episodes) throw new Error();
-            
             grid.innerHTML = `<div class="series-nav-header" onclick="App.populateSubCategories()">⬅️ Geri Dön / ${seriesItem.name || seriesItem.series_name}</div>`;
             
             Object.keys(res.episodes).forEach(seasonNum => {
@@ -538,7 +511,6 @@ const App = {
                         const epCard = document.createElement('div');
                         epCard.className = 'channel-card';
                         epCard.innerHTML = `<h3>📺 Bölüm ${ep.episode_num}: ${ep.title}</h3>`;
-                        
                         epCard.onclick = () => this.playDirectUrl(`${this.state.server}/series/${this.state.username}/${this.state.password}/${ep.id}.${ep.container_extension || 'mp4'}`);
                         grid.appendChild(epCard);
                     });
@@ -551,7 +523,6 @@ const App = {
     async playItem(item, mode) {
         const id = item.stream_id || item.series_id;
         let streamUrl = '';
-
         if (mode === 'live') {
             streamUrl = `${this.state.server}/live/${this.state.username}/${this.state.password}/${id}.m3u8`;
             this.loadEPG(id);
@@ -568,41 +539,45 @@ const App = {
         const video = this.el.video();
         
         if (this.state.hlsInstance) { 
-            this.state.hlsInstance.stopLoad();
-            this.state.hlsInstance.detachMedia();
             this.state.hlsInstance.destroy(); 
             this.state.hlsInstance = null; 
         }
 
-        if ((url.includes('.m3u8') || url.includes('%2Em3u8')) && Hls.isSupported()) {
-            this.state.hlsInstance = new Hls({
-                maxMaxBufferLength: 10,
-                enableWorker: true,
-                lowLatencyMode: true
-            });
-            this.state.hlsInstance.loadSource(url);
-            this.state.hlsInstance.attachMedia(video);
-            this.state.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-            
-            this.state.hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            console.log("HLS Ağ Hatası, yeniden yükleniyor...");
-                            this.state.hlsInstance.startLoad();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            console.log("HLS Medya Hatası, kurtarılmaya çalışılıyor...");
-                            this.state.hlsInstance.recoverMediaError();
-                            break;
-                        default:
-                            video.src = url;
-                            video.play().catch(() => {});
-                            break;
+        // HLS Oynatma Yapılandırması (Canlı Yayınlar)
+        if (url.includes('.m3u8') || url.includes('%2Em3u8')) {
+            if (Hls.isSupported()) {
+                // Cloudflare Tüneline özel başlıkları (XHR) yönetebilmek için hls.js ayarları
+                this.state.hlsInstance = new Hls({
+                    maxMaxBufferLength: 20,
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    // Video parçalarını (ts dosyalarını) çekerken de CORS korumasını bozmaması için:
+                    xhrSetup: function (xhr, url) {
+                        xhr.withCredentials = false;
                     }
-                }
-            });
+                });
+                this.state.hlsInstance.loadSource(url);
+                this.state.hlsInstance.attachMedia(video);
+                this.state.hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(() => video.muted = true);
+                });
+                
+                this.state.hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                            this.state.hlsInstance.startLoad();
+                        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                            this.state.hlsInstance.recoverMediaError();
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Safari ve mobil tarayıcılar için doğrudan native oynatma
+                video.src = url;
+                video.play().catch(() => {});
+            }
         } else {
+            // Filmler ve Sabit Mp4 Dosyaları
             video.src = url;
             video.play().catch(() => {});
         }
@@ -615,11 +590,7 @@ const App = {
             if(res && res.epg_listings && res.epg_listings.length > 0) {
                 const nowPlaying = res.epg_listings[0].title;
                 let decodedTitle = nowPlaying;
-                try {
-                    if (res.epg_listings[0].title_decoded) {
-                        decodedTitle = atob(res.epg_listings[0].title_decoded);
-                    }
-                } catch(b64err) { decodedTitle = nowPlaying; }
+                try { if (res.epg_listings[0].title_decoded) { decodedTitle = atob(res.epg_listings[0].title_decoded); } } catch(b64err) { decodedTitle = nowPlaying; }
                 this.el.epgText().textContent = decodedTitle;
                 this.el.epg().style.display = "block";
             } else { this.el.epg().style.display = "none"; }
@@ -641,8 +612,7 @@ const App = {
     setupVideoDoubleClick() {
         this.el.video().addEventListener('dblclick', () => {
             const video = this.el.video();
-            if (!document.fullscreenElement) { video.requestFullscreen().catch(() => {}); } 
-            else { document.exitFullscreen(); }
+            if (!document.fullscreenElement) { video.requestFullscreen().catch(() => {}); } else { document.exitFullscreen(); }
         });
     },
 
